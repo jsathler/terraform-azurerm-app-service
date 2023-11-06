@@ -108,12 +108,14 @@ module "windows-function" {
       }
     },
     {
-      name                       = "${local.prefix}-java"
-      storage_account_name       = azurerm_storage_account.default.name
-      storage_account_access_key = azurerm_storage_account.default.primary_access_key
-      #virtual_network_subnet_id  = module.vnet.subnet_ids["default-snet"]
+      name                          = "${local.prefix}-java"
+      storage_account_name          = azurerm_storage_account.default.name
+      storage_account_access_key    = azurerm_storage_account.default.primary_access_key
       public_network_access_enabled = true
+
       site_config = {
+        scm_use_main_ip_restriction = true
+
         application_stack = {
           stack_runtime = "Java"
         }
