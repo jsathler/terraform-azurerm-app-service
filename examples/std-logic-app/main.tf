@@ -23,32 +23,6 @@ resource "azurerm_storage_account" "default" {
   account_replication_type = "LRS"
 }
 
-resource "azurerm_storage_container" "default" {
-  name                 = "backup"
-  storage_account_name = azurerm_storage_account.default.name
-}
-
-resource "time_rotating" "default" {
-  rotation_years = 10
-}
-
-#https://learn.microsoft.com/en-us/rest/api/storageservices/create-service-sas
-data "azurerm_storage_account_blob_container_sas" "default" {
-  connection_string = azurerm_storage_account.default.primary_connection_string
-  container_name    = azurerm_storage_container.default.name
-  start             = time_rotating.default.id
-  expiry            = timeadd(time_rotating.default.id, "${10 * 365 * 24}h") #10 years
-
-  permissions {
-    read   = true
-    write  = true
-    delete = true
-    list   = true
-    add    = false
-    create = false
-  }
-}
-
 module "vnet" {
   source              = "jsathler/network/azurerm"
   version             = "0.0.2"
@@ -88,29 +62,25 @@ module "private-zone" {
   }
 }
 
-locals {
-  storage_account_backup_url = "https://${azurerm_storage_account.default.name}.blob.core.windows.net/${azurerm_storage_container.default.name}${data.azurerm_storage_account_blob_container_sas.default.sas}"
-}
-
-module "windows-function" {
+module "standard-logic-app" {
   source              = "../../"
   resource_group_name = azurerm_resource_group.default.name
   service_plan = {
     name     = local.prefix
     os_type  = "Windows"
-    sku_name = "S1"
+    sku_name = "WS1"
     #zone_balancing_enabled = true
   }
 
-  windows_functions = [
+  standard_logic_apps = [
     {
-      name                          = "${local.prefix}-dotnet"
+      name                          = "${local.prefix}-public"
       storage_account_name          = azurerm_storage_account.default.name
       storage_account_access_key    = azurerm_storage_account.default.primary_access_key
       public_network_access_enabled = true
       identity                      = {}
-      zip_deploy_file               = "${path.module}/astabular.zip"
-      app_settings                  = { WEBSITE_RUN_FROM_PACKAGE = 1 }
+      #app_settings               = { WEBSITE_RUN_FROM_PACKAGE = 1 }
+
       site_config = {
         scm_use_main_ip_restriction = true
 
@@ -134,43 +104,17 @@ module "windows-function" {
       }
     },
     {
-      name                       = "${local.prefix}-node"
+      name                       = "${local.prefix}-private"
       storage_account_name       = azurerm_storage_account.default.name
       storage_account_access_key = azurerm_storage_account.default.primary_access_key
       virtual_network_subnet_id  = module.vnet.subnet_ids["appservice-snet"]
-      site_config = {
-        application_stack = {
-          stack_runtime = "Node.js"
-        }
-        cors = { allowed_origins = ["https://portal.azure.com", "https://example.com"] }
-      }
-    },
-    {
-      name                       = "${local.prefix}-java"
-      storage_account_name       = azurerm_storage_account.default.name
-      storage_account_access_key = azurerm_storage_account.default.primary_access_key
-      virtual_network_subnet_id  = module.vnet.subnet_ids["appservice-snet"]
-      backup                     = { storage_account_url = local.storage_account_backup_url }
 
       site_config = {
-        application_stack = {
-          stack_runtime = "Java"
-        }
-      }
-    },
-    {
-      name                       = "${local.prefix}-psh"
-      storage_account_name       = azurerm_storage_account.default.name
-      storage_account_access_key = azurerm_storage_account.default.primary_access_key
-      virtual_network_subnet_id  = module.vnet.subnet_ids["appservice-snet"]
-      site_config = {
-        application_stack = {
-          stack_runtime = "PowerShell"
-        }
+        cors = { allowed_origins = ["https://portal.azure.com", "https://example.com"] }
       }
 
       private_endpoint = {
-        name      = "${local.prefix}-psh-func-site"
+        name      = "${local.prefix}-private-logic-site"
         subnet_id = module.vnet.subnet_ids.default-snet
         #application_security_group_ids = [azurerm_application_security_group.default["kv"].id]
         private_dns_zone_id = module.private-zone.private_zone_ids["privatelink.azurewebsites.net"]
@@ -179,6 +123,6 @@ module "windows-function" {
   ]
 }
 
-output "windows-function" {
-  value = module.windows-function
+output "standard-logic-app" {
+  value = module.standard-logic-app
 }

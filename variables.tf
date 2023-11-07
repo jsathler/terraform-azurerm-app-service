@@ -170,3 +170,102 @@ variable "windows_functions" {
 
   default = null
 }
+
+variable "standard_logic_apps" {
+  type = list(object({
+    name                          = string #limit to 32 chars to avoid name colision in storage account
+    app_settings                  = optional(map(string), null)
+    bundle_version                = optional(string, "2.0.0")
+    client_affinity_enabled       = optional(bool, false)
+    client_certificate_mode       = optional(string, "Optional")
+    enabled                       = optional(bool, true)
+    https_only                    = optional(bool, true)
+    storage_account_name          = string
+    storage_account_access_key    = string
+    storage_account_share_name    = optional(string, null)
+    use_extension_bundle          = optional(string, null)
+    version                       = optional(string, "~4")
+    virtual_network_subnet_id     = optional(string, null)
+    public_network_access_enabled = optional(bool, false)
+
+    site_config = optional(object({
+      always_on                        = optional(bool, true)
+      app_scale_limit                  = optional(number, null)
+      api_definition_url               = optional(string, null)
+      api_management_api_id            = optional(string, null)
+      app_command_line                 = optional(string, null)
+      dotnet_framework_version         = optional(string, "v6.0")
+      elastic_instance_minimum         = optional(number, null)
+      ftps_state                       = optional(string, "FtpsOnly")
+      health_check_path                = optional(string, null)
+      http2_enabled                    = optional(bool, false)
+      scm_use_main_ip_restriction      = optional(bool, false)
+      scm_min_tls_version              = optional(string, "1.2")
+      scm_type                         = optional(string, null)
+      linux_fx_version                 = optional(string, null)
+      min_tls_version                  = optional(string, "1.2")
+      pre_warmed_instance_count        = optional(number, null)
+      runtime_scale_monitoring_enabled = optional(bool, false)
+      use_32_bit_worker_process        = optional(bool, false)
+      vnet_route_all_enabled           = optional(bool, true)
+      websockets_enabled               = optional(bool, false)
+      vnet_content_share_enabled       = optional(bool, false)
+      vnet_image_pull_enabled          = optional(bool, false)
+
+      cors = optional(object({
+        allowed_origins     = list(string)
+        support_credentials = optional(bool, false)
+      }), null) #cors
+
+      ip_restriction = optional(list(object({
+        name                      = string
+        priority                  = number
+        action                    = optional(string, "Allow")
+        ip_address                = optional(string, null)
+        service_tag               = optional(string, null)
+        virtual_network_subnet_id = optional(string, null)
+        headers = optional(object({
+          x_azure_fdid      = optional(string, null)
+          x_fd_health_probe = optional(string, null)
+          x_forwarded_for   = optional(string, null)
+          x_forwarded_host  = optional(string, null)
+        }), null)
+      })), null) #ip_restriction
+
+      scm_ip_restriction = optional(list(object({
+        name                      = string
+        priority                  = number
+        action                    = optional(string, "Allow")
+        ip_address                = optional(string, null)
+        service_tag               = optional(string, null)
+        virtual_network_subnet_id = optional(string, null)
+        headers = optional(object({
+          x_azure_fdid      = optional(string, null)
+          x_fd_health_probe = optional(string, null)
+          x_forwarded_for   = optional(string, null)
+          x_forwarded_host  = optional(string, null)
+        }), null)
+      })), null) #scm_ip_restriction 
+
+    }), {}) ##site_config
+
+    identity = optional(object({
+      type         = optional(string, "SystemAssigned")
+      identity_ids = optional(list(string), null)
+    }), null) #identity
+
+    private_endpoint = optional(object({
+      name                           = string
+      subnet_id                      = string
+      application_security_group_ids = optional(list(string))
+      private_dns_zone_id            = string
+    }), null) #private_endpoint
+
+  })) #type
+
+  /*
+  SKU B does not support backup
+  */
+
+  default = null
+}
