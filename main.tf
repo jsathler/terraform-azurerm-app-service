@@ -20,10 +20,6 @@ locals {
   tags = merge(var.tags, { ManagedByTerraform = "True" })
 }
 
-data "azurerm_resource_group" "default" {
-  name = var.resource_group_name
-}
-
 ###########
 # Resource Plan
 ###########
@@ -60,10 +56,11 @@ resource "azurerm_windows_function_app" "default" {
   public_network_access_enabled = each.value.public_network_access_enabled
   virtual_network_subnet_id     = each.value.virtual_network_subnet_id
   zip_deploy_file               = each.value.zip_deploy_file
+  functions_extension_version   = each.value.functions_extension_version
   tags                          = local.tags
 
   #https://learn.microsoft.com/en-us/azure/azure-functions/functions-app-settings
-  app_settings = {}
+  app_settings = each.value.app_settings
 
   site_config {
     always_on                              = each.value.site_config.always_on
@@ -203,8 +200,8 @@ resource "azurerm_windows_function_app" "default" {
   #   }
 
 
-  # https://learn.microsoft.com/en-us/azure/azure-functions/storage-considerations?tabs=azure-cli#mount-file-shares
   # This functionality is current only available when running on Linux.
+  # https://learn.microsoft.com/en-us/azure/azure-functions/storage-considerations?tabs=azure-cli#mount-file-shares
   #   storage_account {
   #     access_key   = each.value.storage_account.access_key
   #     account_name = each.value.storage_account.account_name
@@ -221,11 +218,34 @@ resource "azapi_update_resource" "windows_function_app_vnet" {
   for_each   = { for key, value in var.windows_functions : value.name => value }
   type       = "Microsoft.Web/sites@2022-09-01"
   name       = var.name_sufix_append ? "${each.key}-func" : each.key
-  parent_id  = data.azurerm_resource_group.default.id
+  parent_id  = split("/providers/", azurerm_service_plan.default.id)[0]
   body = jsonencode({
     properties = {
       vnetContentShareEnabled = each.value.site_config.vnet_content_share_enabled
       vnetImagePullEnabled    = each.value.site_config.vnet_image_pull_enabled
     }
   })
+}
+
+#######
+# Create private endpoint for sites
+#######
+
+module "private-endpoint" {
+  for_each            = { for key, value in var.windows_functions : value.name => value if value.private_endpoint != null }
+  source              = "jsathler/private-endpoint/azurerm"
+  version             = "0.0.1"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  name_sufix_append   = var.name_sufix_append
+  tags                = local.tags
+
+  private_endpoint = {
+    name                           = each.value.private_endpoint.name
+    subnet_id                      = each.value.private_endpoint.subnet_id
+    private_connection_resource_id = azurerm_windows_function_app.default[each.key].id
+    subresource_name               = "sites"
+    application_security_group_ids = each.value.private_endpoint.application_security_group_ids
+    private_dns_zone_id            = each.value.private_endpoint.private_dns_zone_id
+  }
 }

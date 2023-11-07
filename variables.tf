@@ -50,6 +50,8 @@ variable "windows_functions" {
     public_network_access_enabled = optional(bool, false)
     virtual_network_subnet_id     = optional(string, null)
     zip_deploy_file               = optional(string, null)
+    app_settings                  = optional(map(string), null)
+    functions_extension_version   = optional(string, "~4")
 
     site_config = optional(object({
       always_on                              = optional(bool, true)
@@ -144,6 +146,13 @@ variable "windows_functions" {
       }), {})
     }), null) #backup
 
+    private_endpoint = optional(object({
+      name                           = string
+      subnet_id                      = string
+      application_security_group_ids = optional(list(string))
+      private_dns_zone_id            = string
+    }), null) #private_endpoint
+
     # storage_account = optional(list(object({
     #   name         = string
     #   access_key   = string
@@ -154,6 +163,10 @@ variable "windows_functions" {
     # })), null)
 
   }))
+
+  /*
+  SKU B does not support backup
+  */
 
   default = null
 }
