@@ -7,15 +7,15 @@ output "service_plan_kind" {
 }
 
 output "std_logic_app_ids" {
-  value = try({ for key, value in azurermazurerm_logic_app_standard.default : value.name => value.id }, null)
+  value = try({ for key, value in azurerm_logic_app_standard.default : value.name => value.id }, null)
 }
 
 output "std_logic_app_identities" {
-  value = try({ for key, value in azurermazurerm_logic_app_standard.default : value.name => value.identity }, null)
+  value = try({ for key, value in azurerm_logic_app_standard.default : value.name => value.identity }, null)
 }
 
 output "std_logic_app_default_host_names" {
-  value = try({ for key, value in azurermazurerm_logic_app_standard.default : value.name => value.default_hostname }, null)
+  value = try({ for key, value in azurerm_logic_app_standard.default : value.name => value.default_hostname }, null)
 }
 
 output "win_function_ids" {
