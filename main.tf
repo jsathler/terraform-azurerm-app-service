@@ -60,7 +60,7 @@ resource "azurerm_subnet" "default" {
     name = "delegation"
 
     service_delegation {
-      name = "Microsoft.Web.serverFarms"
+      name = "Microsoft.Web/serverFarms"
     }
   }
 }
