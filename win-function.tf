@@ -14,7 +14,7 @@ resource "azurerm_windows_function_app" "default" {
   enabled                       = each.value.enabled
   https_only                    = each.value.https_only
   public_network_access_enabled = each.value.public_network_access_enabled
-  virtual_network_subnet_id     = try(azurerm_subnet.default.id, null)
+  virtual_network_subnet_id     = try(azurerm_subnet.default[0].id, null)
   zip_deploy_file               = each.value.zip_deploy_file
   functions_extension_version   = each.value.functions_extension_version
   tags                          = local.tags

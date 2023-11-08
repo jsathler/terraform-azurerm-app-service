@@ -19,7 +19,7 @@ resource "azurerm_logic_app_standard" "default" {
   storage_account_share_name = each.value.storage_account_share_name
   use_extension_bundle       = each.value.use_extension_bundle
   version                    = each.value.version
-  virtual_network_subnet_id  = try(azurerm_subnet.default.id, null)
+  virtual_network_subnet_id  = try(azurerm_subnet.default[0].id, null)
   tags                       = local.tags
 
   # dynamic "connection_string" {
