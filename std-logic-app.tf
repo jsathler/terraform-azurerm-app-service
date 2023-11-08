@@ -135,7 +135,7 @@ resource "azapi_update_resource" "logic_app_standard" {
 module "private-endpoint-std-logicapp" {
   for_each            = var.standard_logic_apps == null ? {} : { for key, value in var.standard_logic_apps : value.name => value if value.private_endpoint != null }
   source              = "jsathler/private-endpoint/azurerm"
-  version             = "0.0.1"
+  version             = "0.0.2"
   location            = var.location
   resource_group_name = var.resource_group_name
   name_sufix_append   = var.name_sufix_append

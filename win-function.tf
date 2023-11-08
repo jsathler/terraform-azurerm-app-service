@@ -192,7 +192,7 @@ resource "azapi_update_resource" "windows_function_app" {
 module "private-endpoint-winfunc" {
   for_each            = var.windows_functions == null ? {} : { for key, value in var.windows_functions : value.name => value if value.private_endpoint != null }
   source              = "jsathler/private-endpoint/azurerm"
-  version             = "0.0.1"
+  version             = "0.0.2"
   location            = var.location
   resource_group_name = var.resource_group_name
   name_sufix_append   = var.name_sufix_append
