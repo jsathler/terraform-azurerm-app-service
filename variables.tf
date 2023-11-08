@@ -37,6 +37,19 @@ variable "service_plan" {
   })
 }
 
+variable "vnet_integration" {
+  type = object({
+    vnet_id         = string
+    nsg_name        = optional(string, null)
+    route_table_id  = optional(string, null)
+    asp_snet_name   = string
+    asp_snet_prefix = string
+  })
+
+  default = null
+}
+
+
 variable "windows_functions" {
   type = list(object({
     name                          = string #limit to 32 chars to avoid name colision in storage account

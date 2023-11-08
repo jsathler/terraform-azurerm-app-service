@@ -37,3 +37,49 @@ resource "azurerm_service_plan" "default" {
   zone_balancing_enabled       = var.service_plan.zone_balancing_enabled
   tags                         = local.tags
 }
+
+###########
+# Networking
+# Since each Service Plan instance requires dedicated a subnet, we decided to include subnet and nsg resources on this module
+###########
+
+data "azurerm_virtual_network" "default" {
+  count               = var.vnet_integration == null ? 0 : 1
+  name                = split("/", var.vnet_integration.vnet_id)[8]
+  resource_group_name = split("/", var.vnet_integration.vnet_id)[4]
+}
+
+resource "azurerm_subnet" "default" {
+  count                = var.vnet_integration == null ? 0 : 1
+  name                 = var.name_sufix_append ? "${var.vnet_integration.asp_snet_name}-snet" : var.vnet_integration.asp_snet_name
+  resource_group_name  = data.azurerm_virtual_network.default[0].resource_group_name
+  virtual_network_name = data.azurerm_virtual_network.default[0].name
+  address_prefixes     = [var.vnet_integration.asp_snet_prefix]
+
+  delegation {
+    name = "delegation"
+
+    service_delegation {
+      name = "Microsoft.Web.serverFarms"
+    }
+  }
+}
+
+resource "azurerm_network_security_group" "default" {
+  count               = try(var.vnet_integration.nsg_name, null) == null ? 0 : 1
+  name                = var.name_sufix_append ? "${var.vnet_integration.nsg_name}-nsg" : var.vnet_integration.nsg_name
+  resource_group_name = var.resource_group_name
+  location            = var.location
+}
+
+resource "azurerm_subnet_network_security_group_association" "default" {
+  count                     = try(var.vnet_integration.nsg_name, null) == null ? 0 : 1
+  network_security_group_id = azurerm_network_security_group.default[0].id
+  subnet_id                 = azurerm_subnet.default[0].id
+}
+
+resource "azurerm_subnet_route_table_association" "default" {
+  count          = try(var.vnet_integration.route_table_id, null) == null ? 0 : 1
+  subnet_id      = azurerm_subnet.default[0].id
+  route_table_id = var.vnet_integration.route_table_id
+}
