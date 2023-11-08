@@ -3,7 +3,7 @@
 #######
 
 resource "azurerm_logic_app_standard" "default" {
-  for_each                   = { for key, value in var.standard_logic_apps : value.name => value }
+  for_each                   = var.standard_logic_apps == null ? {} : { for key, value in var.standard_logic_apps : value.name => value }
   name                       = var.name_sufix_append ? "${each.key}-logic" : each.key
   location                   = var.location
   resource_group_name        = var.resource_group_name
