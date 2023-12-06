@@ -188,7 +188,7 @@ variable "standard_logic_apps" {
   type = list(object({
     name                          = string #limit to 32 chars to avoid name colision in storage account
     app_settings                  = optional(map(string), null)
-    bundle_version                = optional(string, "2.0.0")
+    bundle_version                = optional(string, null)
     client_affinity_enabled       = optional(bool, false)
     client_certificate_mode       = optional(string, "Optional")
     enabled                       = optional(bool, true)
