@@ -23,9 +23,9 @@ resource "azurerm_logic_app_standard" "default" {
   tags                       = local.tags
 
   dynamic "connection_string" {
-    for_each = each.value.connection_string == null ? [] : [each.value.connection_string]
+    for_each = each.value.connection_string == null ? {} : { for key, value in each.value.connection_string : value.name => value }
     content {
-      name  = connection_string.value.name
+      name  = connection_string.key
       type  = connection_string.value.type
       value = connection_string.value.value
     }
