@@ -22,14 +22,14 @@ resource "azurerm_logic_app_standard" "default" {
   virtual_network_subnet_id  = try(azurerm_subnet.default[0].id, null)
   tags                       = local.tags
 
-  # dynamic "connection_string" {
-  #   for_each = []
-  #   content {
-  #     name  = null
-  #     type  = null
-  #     value = null
-  #   }
-  # }  
+  dynamic "connection_string" {
+    for_each = each.value.connection_string == null ? [] : [each.value.connection_string]
+    content {
+      name  = connection_string.value.name
+      type  = connection_string.value.type
+      value = connection_string.value.value
+    }
+  }
 
   dynamic "identity" {
     for_each = each.value.identity == null ? [] : [each.value.identity]

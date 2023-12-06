@@ -39,11 +39,14 @@ resource "azurerm_windows_function_app" "default" {
     }
   }
 
-  #   connection_string {
-  #     name  = null
-  #     type  = null
-  #     value = null
-  #   }
+  dynamic "connection_string" {
+    for_each = each.value.connection_string == null ? [] : [each.value.connection_string]
+    content {
+      name  = connection_string.value.name
+      type  = connection_string.value.type
+      value = connection_string.value.value
+    }
+  }
 
   #You will may need the following roles: Storage Account Contributor, Storage Blob Data Owner, Storage Queue Data Contributor, Storage Table Data Contributor
   #https://learn.microsoft.com/en-us/azure/azure-functions/functions-reference?tabs=blob&pivots=programming-language-csharp#connecting-to-host-storage-with-an-identity

@@ -166,6 +166,12 @@ variable "windows_functions" {
       private_dns_zone_id            = string
     }), null) #private_endpoint
 
+    connection_string = optional(object({
+      name  = string
+      type  = string
+      value = string
+    }), null) #connection_string    
+
     # storage_account = optional(list(object({
     #   name         = string
     #   access_key   = string
@@ -273,6 +279,12 @@ variable "standard_logic_apps" {
       application_security_group_ids = optional(list(string))
       private_dns_zone_id            = string
     }), null) #private_endpoint
+
+    connection_string = optional(object({
+      name  = string
+      type  = string
+      value = string
+    }), null) #connection_string        
 
   })) #type
 
